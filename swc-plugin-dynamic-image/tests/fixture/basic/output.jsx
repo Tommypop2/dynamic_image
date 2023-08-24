@@ -5,7 +5,7 @@ const DynamicImage = (props)=>{
         return createOpenGraphImage(<div>123</div>);
     });
     const url = createMemo(()=>{
-        return img.url + `?args=${JSON.stringify(props.values)}`;
+        return img.url + `?args=${encodeURIComponent(JSON.stringify(props.values))}`;
     });
     return <>{url()}</>;
 };

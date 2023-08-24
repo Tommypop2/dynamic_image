@@ -11,21 +11,18 @@ use reactive::ReactiveVisitor;
 use swc_core::common::errors::{ColorConfig, Handler};
 use swc_core::common::{FileName, SourceFile, SourceMap, GLOBALS};
 use swc_core::ecma::ast::{
-    ArrayLit, ArrayPat, ArrowExpr, BinExpr, BinaryOp, BindingIdent, BlockStmt, BlockStmtOrExpr,
-    CallExpr, Callee, Decl, EsVersion, ExprOrSpread, Ident, ImportDecl, ImportDefaultSpecifier,
-    ImportNamedSpecifier, ImportSpecifier, JSXAttr, JSXAttrName, JSXAttrOrSpread, JSXAttrValue,
-    JSXClosingElement, JSXClosingFragment, JSXExpr, JSXExprContainer, JSXFragment,
-    JSXOpeningFragment, KeyValueProp, MemberExpr, MemberProp, Module, ModuleDecl, ModuleItem,
-    ObjectLit, Pat, Prop, PropName, PropOrSpread, ReturnStmt, Stmt, Tpl, TplElement, VarDecl,
-    VarDeclKind, VarDeclarator,
+    BinExpr, BinaryOp, BindingIdent, CallExpr, Callee, EsVersion, ExprOrSpread, ImportDecl,
+    ImportDefaultSpecifier, ImportNamedSpecifier, ImportSpecifier, JSXAttr, JSXAttrName,
+    JSXAttrOrSpread, JSXAttrValue, JSXClosingFragment, JSXExpr, JSXExprContainer, JSXFragment,
+    JSXOpeningFragment, MemberExpr, MemberProp, Module, ModuleDecl, ModuleItem, Pat, ReturnStmt,
+    Stmt, Tpl, TplElement,
 };
 use swc_core::ecma::parser::{Syntax, TsConfig};
-use swc_core::ecma::utils::{prepend_stmt, prepend_stmts, swc_common};
-use swc_core::plugin::{plugin_transform, proxies::TransformPluginProgramMetadata};
+use swc_core::ecma::utils::prepend_stmt;
 use swc_core::{
     common::DUMMY_SP,
     ecma::{
-        ast::{Expr, JSXElement, JSXElementChild, JSXElementName, JSXOpeningElement, Program},
+        ast::{Expr, JSXElement, JSXElementChild, JSXElementName, JSXOpeningElement},
         visit::{as_folder, FoldWith, VisitMut, VisitMutWith},
     },
 };
@@ -55,19 +52,12 @@ impl Import {
         }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct TransformVisitor {
     dynamic_images: Vec<DynamicImage>,
     imports: Vec<Import>,
 }
-impl Default for TransformVisitor {
-    fn default() -> Self {
-        Self {
-            dynamic_images: vec![],
-            imports: vec![],
-        }
-    }
-}
+
 impl TransformVisitor {
     fn insert_imports(&mut self, module: &mut Module) {
         for import in &self.imports {
@@ -99,7 +89,7 @@ impl TransformVisitor {
         }
     }
     fn insert_dynamics(&mut self, module: &mut Module) {
-        if self.dynamic_images.len() == 0 {
+        if self.dynamic_images.is_empty() {
             return;
         }
         self.imports.push(Import::new(
@@ -274,7 +264,7 @@ impl VisitMut for TransformVisitor {
                             name: JSXAttrName::Ident(ident("values")),
                             value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
                                 span: DUMMY_SP,
-                                expr: JSXExpr::Expr(Box::new(generate_values(&visitor.reactives))),
+                                expr: JSXExpr::Expr(Box::new(generate_values(visitor.reactives))),
                             })),
                         })],
                         type_args: None,

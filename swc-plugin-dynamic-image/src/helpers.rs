@@ -13,7 +13,7 @@ pub fn ident(name: &str) -> Ident {
         optional: false,
     }
 }
-pub fn generate_values(reactives: &Vec<Box<Expr>>) -> Expr {
+pub fn generate_values(reactives: Vec<Box<Expr>>) -> Expr {
     let mut elems: Vec<Option<ExprOrSpread>> = vec![];
     for reactive in reactives {
         elems.push(Some(ExprOrSpread {
