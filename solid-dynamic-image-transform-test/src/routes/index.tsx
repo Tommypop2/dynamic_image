@@ -1,16 +1,7 @@
-import {
-	ParentProps,
-	children,
-	createMemo,
-	createSignal,
-} from "solid-js";
+import { createSignal, createMemo } from "solid-js";
 import { Title } from "solid-start";
 import Counter from "~/components/Counter";
-const Image = (props: ParentProps) => {
-	const kindern = children(() => props.children);
-	const url = createMemo(() => kindern()?.toString());
-	return <img src={url()}></img>;
-};
+import { DynamicImage, Image } from "@solid-mediakit/dynamic-image";
 export default function Home() {
 	const [count, setCount] = createSignal(0);
 	return (

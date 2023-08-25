@@ -98,7 +98,7 @@ impl TransformVisitor {
             true,
         ));
         self.imports.push(Import::new(
-            "@solid-mediakit/dynamic-image".into(),
+            "@solid-mediakit/dynamic-image/server".into(),
             "createOpenGraphImage".into(),
             false,
         ));
