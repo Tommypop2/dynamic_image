@@ -1,4 +1,4 @@
-import { createOpenGraphImage } from "@solid-mediakit/dynamic-image";
+import { createOpenGraphImage } from "@solid-mediakit/dynamic-image/server";
 import server$ from "solid-start/server";
 const DynamicImage0 = (props)=>{
     const img = server$((r0)=>{

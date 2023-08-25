@@ -24,7 +24,7 @@ const OpenGraphPlugin: PluginOption = {
 			return null;
 		}
 		const out = transform(code, id);
-		if (id.endsWith("root.tsx")) {
+		if (id.endsWith("index.tsx")) {
 			// console.log(out);
 		}
 		return out;

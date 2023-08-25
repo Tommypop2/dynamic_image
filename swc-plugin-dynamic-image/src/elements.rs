@@ -1,7 +1,8 @@
 use swc_core::{
     common::DUMMY_SP,
     ecma::ast::{
-        JSXClosingElement, JSXElement, JSXElementChild, JSXElementName, JSXOpeningElement,
+        Expr, JSXClosingElement, JSXElement, JSXElementChild, JSXElementName, JSXExpr,
+        JSXOpeningElement,
     },
 };
 
@@ -10,19 +11,25 @@ use crate::helpers::ident;
  * Takes a vector of elements as input:
  * Either returns the child when there is only one, or wraps the children in a div and returns it
  */
-pub fn transform_elements(children: &Vec<JSXElementChild>) -> Box<JSXElement> {
+pub fn transform_elements(children: &Vec<JSXElementChild>) -> Expr {
     // This function is way too clone heavy
     let mut child_elems: Vec<JSXElement> = vec![];
     for child in children {
+        // Kinda janky
+        if let JSXElementChild::JSXExprContainer(c) = child {
+            if let JSXExpr::Expr(e) = &c.expr {
+                return *e.clone();
+            }
+        }
         if let JSXElementChild::JSXElement(element) = child {
             child_elems.push(*element.clone());
         }
     }
     if child_elems.len() == 1 {
-        Box::new(child_elems[0].clone())
+        Expr::JSXElement(Box::new(child_elems[0].clone()))
     } else {
         // Wrap in a div
-        Box::new(JSXElement {
+        Expr::JSXElement(Box::new(JSXElement {
             span: DUMMY_SP,
             opening: JSXOpeningElement {
                 span: DUMMY_SP,
@@ -36,6 +43,6 @@ pub fn transform_elements(children: &Vec<JSXElementChild>) -> Box<JSXElement> {
                 span: DUMMY_SP,
                 name: JSXElementName::Ident(ident("div")),
             }),
-        })
+        }))
     }
 }

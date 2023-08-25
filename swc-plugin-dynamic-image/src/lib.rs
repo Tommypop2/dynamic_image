@@ -1,3 +1,4 @@
+pub mod dynamic_image;
 pub mod elements;
 mod helpers;
 mod reactive;
@@ -6,6 +7,7 @@ use std::sync::Arc;
 
 use crate::elements::transform_elements;
 use crate::helpers::generate_values;
+use dynamic_image::generate_dynamic_image_use;
 use helpers::{arrow_fn_expr, call_expr, const_var_decl, generate_params, ident};
 use reactive::ReactiveVisitor;
 use swc_core::common::errors::{ColorConfig, Handler};
@@ -30,10 +32,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[derive(Debug)]
 pub struct DynamicImage {
     reactives: usize,
-    element: Box<JSXElement>,
+    element: Expr,
 }
 impl DynamicImage {
-    fn new(reactives: usize, element: Box<JSXElement>) -> Self {
+    fn new(reactives: usize, element: Expr) -> Self {
         Self { reactives, element }
     }
 }
@@ -128,7 +130,7 @@ impl TransformVisitor {
                                             span: DUMMY_SP,
                                             arg: Some(Box::new(call_expr(
                                                 "createOpenGraphImage",
-                                                Expr::JSXElement(image.element.clone()),
+                                                image.element.clone(),
                                             ))),
                                         })],
                                     )),
@@ -250,34 +252,35 @@ impl VisitMut for TransformVisitor {
         if let JSXElementName::Ident(i) = &n.opening.name {
             // Very basic heuristic (should really check where it's imported from)
             if i.sym.to_string() == "DynamicImage" {
+                // if !&n.children.is_empty() {
+                //     let child = &n.children[0];
+                //     if let JSXElementChild::JSXExprContainer(c) = child {
+                //         if let JSXExpr::Expr(e) = &c.expr {
+                //             /* This handles the case of when the user passes a function to `DynamicImage`
+                //              * <DynamicImage>
+                //              *  {() => {
+                //              *      return <div>Hello World</div>
+                //              *  }}
+                //              * </DynamicImage>
+                //              */
+                //             self.dynamic_images.push(DynamicImage::new(0, *e.clone()));
+                //             *n = generate_dynamic_image_use(0, generate_values(vec![]));
+                //             return;
+                //         }
+                //     }
+                // }
                 // Collect all our reactive expressions
                 let mut element = transform_elements(&n.children);
                 let mut visitor = ReactiveVisitor::default();
-                element.visit_mut_children_with(&mut visitor);
+                if let Expr::JSXElement(_) = element {
+                    element.visit_mut_children_with(&mut visitor);
+                }
                 self.dynamic_images
                     .push(DynamicImage::new(visitor.reactives.len(), element));
-                *n = JSXElement {
-                    span: DUMMY_SP,
-                    opening: JSXOpeningElement {
-                        span: DUMMY_SP,
-                        self_closing: true,
-                        attrs: vec![JSXAttrOrSpread::JSXAttr(JSXAttr {
-                            span: DUMMY_SP,
-                            name: JSXAttrName::Ident(ident("values")),
-                            value: Some(JSXAttrValue::JSXExprContainer(JSXExprContainer {
-                                span: DUMMY_SP,
-                                expr: JSXExpr::Expr(Box::new(generate_values(visitor.reactives))),
-                            })),
-                        })],
-                        type_args: None,
-                        name: JSXElementName::Ident(ident(&format!(
-                            "DynamicImage{}",
-                            self.dynamic_images.len() - 1
-                        ))),
-                    },
-                    children: vec![],
-                    closing: None,
-                };
+                *n = generate_dynamic_image_use(
+                    self.dynamic_images.len() - 1,
+                    generate_values(visitor.reactives),
+                )
             }
         }
     }
