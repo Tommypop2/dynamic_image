@@ -98,15 +98,16 @@ impl TransformVisitor {
             true,
         ));
         self.imports.push(Import::new(
-            "@solid-mediakit/open-graph".into(),
+            "@solid-mediakit/dynamic-image".into(),
             "createOpenGraphImage".into(),
             false,
         ));
         // self.imports
         //     .push(Import::new("solid-js".into(), "createMemo".into(), false));
+        let mut imgs_count = 0;
         for image in &self.dynamic_images {
             let stmt = Stmt::Decl(const_var_decl(
-                "DynamicImage",
+                &format!("DynamicImage{imgs_count}"),
                 arrow_fn_expr(
                     vec![Pat::Ident(BindingIdent {
                         id: ident("props"),
@@ -235,6 +236,7 @@ impl TransformVisitor {
                     ],
                 ),
             ));
+            imgs_count += 1;
             prepend_stmt(&mut module.body, ModuleItem::Stmt(stmt))
         }
     }
@@ -268,12 +270,14 @@ impl VisitMut for TransformVisitor {
                             })),
                         })],
                         type_args: None,
-                        name: JSXElementName::Ident(ident("DynamicImage")),
+                        name: JSXElementName::Ident(ident(&format!(
+                            "DynamicImage{}",
+                            self.dynamic_images.len() - 1
+                        ))),
                     },
                     children: vec![],
                     closing: None,
                 };
-                dbg!(self);
             }
         }
     }

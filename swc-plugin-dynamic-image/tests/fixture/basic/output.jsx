@@ -1,6 +1,6 @@
-import { createOpenGraphImage } from "@solid-mediakit/open-graph";
+import { createOpenGraphImage } from "@solid-mediakit/dynamic-image";
 import server$ from "solid-start/server";
-const DynamicImage = (props)=>{
+const DynamicImage0 = (props)=>{
     const img = server$(()=>{
         return createOpenGraphImage(<div>123</div>);
     });
@@ -9,4 +9,4 @@ const DynamicImage = (props)=>{
     });
     return <>{url()}</>;
 };
-const coolVar = <DynamicImage values={[]}/>;
+const coolVar = <DynamicImage0 values={[]}/>;

@@ -13,6 +13,7 @@ import {
 	Title,
 } from "solid-start";
 import "./root.css";
+import { DynamicImage } from "@solid-mediakit/dynamic-image";
 const OpenGraph = (props: ParentProps & { origin: string }) => {
 	const kindern = children(() => props.children);
 	const url = createMemo(() => kindern()?.toString());
