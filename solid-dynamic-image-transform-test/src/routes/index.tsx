@@ -1,4 +1,4 @@
-import { createSignal, createMemo, Show, ParentProps } from "solid-js";
+import { createSignal, Show, ParentProps } from "solid-js";
 import { Title } from "solid-start";
 import Counter from "~/components/Counter";
 import { DynamicImage, Image } from "@solid-mediakit/dynamic-image";
