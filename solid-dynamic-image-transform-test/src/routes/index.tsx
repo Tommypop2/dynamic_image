@@ -1,8 +1,7 @@
-import { createSignal, createMemo, Show } from "solid-js";
+import { createSignal, createMemo, Show, ParentProps } from "solid-js";
 import { Title } from "solid-start";
 import Counter from "~/components/Counter";
 import { DynamicImage, Image } from "@solid-mediakit/dynamic-image";
-import { ParentProps } from "solid-js/types/render";
 const Container = (props: ParentProps) => {
 	return <div style={{ height: "200px" }}>{props.children}</div>;
 };
