@@ -39,7 +39,7 @@ impl DynamicImage {
         Self { reactives, element }
     }
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Import {
     pub source: String,
     pub name: String,
@@ -57,12 +57,16 @@ impl Import {
 #[derive(Debug, Default)]
 pub struct TransformVisitor {
     dynamic_images: Vec<DynamicImage>,
-    imports: Vec<Import>,
+    new_imports: Vec<Import>,
+    original_imports: Vec<Import>,
 }
 
 impl TransformVisitor {
     fn insert_imports(&mut self, module: &mut Module) {
-        for import in &self.imports {
+        for import in &self.new_imports {
+            if self.original_imports.contains(import) {
+                continue;
+            }
             let specifier = if import.default {
                 ImportSpecifier::Default(ImportDefaultSpecifier {
                     span: DUMMY_SP,
@@ -94,18 +98,18 @@ impl TransformVisitor {
         if self.dynamic_images.is_empty() {
             return;
         }
-        self.imports.push(Import::new(
+        self.new_imports.push(Import::new(
             "solid-start/server".into(),
             "server$".into(),
             true,
         ));
-        self.imports.push(Import::new(
+        self.new_imports.push(Import::new(
             "@solid-mediakit/dynamic-image/server".into(),
             "createOpenGraphImage".into(),
             false,
         ));
-        // self.imports
-        //     .push(Import::new("solid-js".into(), "createMemo".into(), false));
+        self.new_imports
+            .push(Import::new("solid-js".into(), "createMemo".into(), false));
         let mut imgs_count = 0;
         for image in &self.dynamic_images {
             let stmt = Stmt::Decl(const_var_decl(
@@ -247,28 +251,30 @@ impl VisitMut for TransformVisitor {
     // Implement necessary visit_mut_* methods for actual custom transform.
     // A comprehensive list of possible visitor methods can be found here:
     // https://rustdoc.swc.rs/swc_ecma_visit/trait.VisitMut.html
+    fn visit_mut_import_decl(&mut self, n: &mut ImportDecl) {
+        n.visit_mut_children_with(self);
+        let src = n.src.value.to_string();
+        for spec in &n.specifiers {
+            match spec {
+                ImportSpecifier::Default(def) => {
+                    let name = def.local.sym.to_string();
+                    self.original_imports
+                        .push(Import::new(src.clone(), name, true))
+                }
+                ImportSpecifier::Named(named) => {
+                    let name = named.local.sym.to_string();
+                    self.original_imports
+                        .push(Import::new(src.clone(), name, false))
+                }
+                ImportSpecifier::Namespace(_) => {}
+            }
+        }
+    }
     fn visit_mut_jsx_element(&mut self, n: &mut JSXElement) {
         n.visit_mut_children_with(self);
         if let JSXElementName::Ident(i) = &n.opening.name {
             // Very basic heuristic (should really check where it's imported from)
             if i.sym.to_string() == "DynamicImage" {
-                // if !&n.children.is_empty() {
-                //     let child = &n.children[0];
-                //     if let JSXElementChild::JSXExprContainer(c) = child {
-                //         if let JSXExpr::Expr(e) = &c.expr {
-                //             /* This handles the case of when the user passes a function to `DynamicImage`
-                //              * <DynamicImage>
-                //              *  {() => {
-                //              *      return <div>Hello World</div>
-                //              *  }}
-                //              * </DynamicImage>
-                //              */
-                //             self.dynamic_images.push(DynamicImage::new(0, *e.clone()));
-                //             *n = generate_dynamic_image_use(0, generate_values(vec![]));
-                //             return;
-                //         }
-                //     }
-                // }
                 // Collect all our reactive expressions
                 let mut element = transform_elements(&n.children);
                 let mut visitor = ReactiveVisitor::default();
