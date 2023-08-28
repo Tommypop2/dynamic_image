@@ -14,17 +14,16 @@ use swc_core::common::errors::{ColorConfig, Handler};
 use swc_core::common::{FileName, SourceFile, SourceMap, GLOBALS};
 use swc_core::ecma::ast::{
     BinExpr, BinaryOp, BindingIdent, CallExpr, Callee, EsVersion, ExprOrSpread, ImportDecl,
-    ImportDefaultSpecifier, ImportNamedSpecifier, ImportSpecifier, JSXAttr, JSXAttrName,
-    JSXAttrOrSpread, JSXAttrValue, JSXClosingFragment, JSXExpr, JSXExprContainer, JSXFragment,
-    JSXOpeningFragment, MemberExpr, MemberProp, Module, ModuleDecl, ModuleItem, Pat, ReturnStmt,
-    Stmt, Tpl, TplElement,
+    ImportDefaultSpecifier, ImportNamedSpecifier, ImportSpecifier, JSXClosingFragment, JSXExpr,
+    JSXExprContainer, JSXFragment, JSXOpeningFragment, MemberExpr, MemberProp, Module, ModuleDecl,
+    ModuleItem, Pat, ReturnStmt, Stmt, Tpl, TplElement,
 };
 use swc_core::ecma::parser::{Syntax, TsConfig};
 use swc_core::ecma::utils::prepend_stmt;
 use swc_core::{
     common::DUMMY_SP,
     ecma::{
-        ast::{Expr, JSXElement, JSXElementChild, JSXElementName, JSXOpeningElement},
+        ast::{Expr, JSXElement, JSXElementChild, JSXElementName},
         visit::{as_folder, FoldWith, VisitMut, VisitMutWith},
     },
 };
@@ -110,8 +109,7 @@ impl TransformVisitor {
         ));
         self.new_imports
             .push(Import::new("solid-js".into(), "createMemo".into(), false));
-        let mut imgs_count = 0;
-        for image in &self.dynamic_images {
+        for (imgs_count, image) in self.dynamic_images.iter().enumerate() {
             let stmt = Stmt::Decl(const_var_decl(
                 &format!("DynamicImage{imgs_count}"),
                 arrow_fn_expr(
@@ -242,7 +240,6 @@ impl TransformVisitor {
                     ],
                 ),
             ));
-            imgs_count += 1;
             prepend_stmt(&mut module.body, ModuleItem::Stmt(stmt))
         }
     }
